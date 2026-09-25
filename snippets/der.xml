@@ -6,39 +6,72 @@
   собирает на стоковом DerpFest без нашего манифеста.
 -->
 <manifest>
-  <!-- Устройство и общая платформа sdm845. beryllium и sdm845-common взяты из der-exp:
-       в beryllium добавлена строка nf_tables (BoardConfig), sdm845-common без изменений,
-       но держим его в одной организации, чтобы ветку было где закрепить. -->
+  <!-- Ядро 4.19 и деревья устройства под него (Android 16). Решение владельца, сентябрь 2026:
+       Android 16 на 4.9 упирается в требования платформы к ядру (NetBpfLoad требует 5.4 для
+       сетевого BPF, плюс MADV_WIPEONFORK, cpuset_v2_mode и др.), а на 4.19 сообщество beryllium
+       уже держит Android 16 с бэкпортами BPF (ro.bpf.kver_override в product.prop дерева).
+       Основа — форки duckyduckG (ветки lineage-23.2), в der-exp ветка der-16.2: наши правки —
+       steer.config и vendor/der в beryllium, nf_tables и AmneziaWG в ядре. Прежние деревья 4.9
+       (der-exp/android_device_xiaomi_beryllium и др.) остаются в der-exp для истории. -->
   <project path="device/xiaomi/beryllium"
-           name="der-exp/android_device_xiaomi_beryllium"
+           name="der-exp/android_device_xiaomi_beryllium_419"
            remote="github" revision="der-16.2" />
   <project path="device/xiaomi/sdm845-common"
-           name="der-exp/android_device_xiaomi_sdm845-common"
+           name="der-exp/android_device_xiaomi_sdm845-common_419"
            remote="github" revision="der-16.2" />
-
-  <!-- Ядро 4.9 с фрагментом steer.config (nf_tables). -->
   <project path="kernel/xiaomi/sdm845"
-           name="der-exp/android_kernel_xiaomi_sdm845"
+           name="der-exp/android_kernel_xiaomi_sdm845_419"
            remote="github" revision="der-16.2" />
 
-  <!-- Зависимость sdm845-common (lineage.dependencies): hardware/xiaomi. Наших правок нет,
-       берём у LineageOS на ветке ROM. -->
+  <!-- Зависимость sdm845-common (lineage.dependencies): hardware/xiaomi, у LineageOS. -->
   <project path="hardware/xiaomi"
            name="LineageOS/android_hardware_xiaomi"
            remote="github" revision="lineage-23.2" />
 
-  <!-- Проприетарные блобы — ветка lineage-22.2 TheMuppets: новее для beryllium и sdm845-common
-       её нет (23.x не публиковали). Подходит она к деревьям lineage-23.2 не на веру: у
-       LineageOS в 22.2 и 23.2 обоих деревьев proprietary-files.txt (302 и 724 строки, с
-       хэшами), extract-files.py и setup-makefiles.py совпадают побайтно, то есть 23.2 извлекла бы
-       те же файлы с теми же правками. Непроверенным остаётся одно — примет ли сборка 23.2
-       сгенерированные в 22.2 Android.bp/mk; это покажет первая сборка. -->
+  <!-- Проприетарные блобы под 4.19 — из той же линии, что деревья (не TheMuppets 22.2: те
+       извлекались под ядро 4.9). -->
   <project path="vendor/xiaomi/beryllium"
-           name="TheMuppets/proprietary_vendor_xiaomi_beryllium"
-           remote="github" revision="lineage-22.2" />
+           name="der-exp/android_vendor_xiaomi_beryllium_419"
+           remote="github" revision="der-16.2" />
   <project path="vendor/xiaomi/sdm845-common"
-           name="TheMuppets/proprietary_vendor_xiaomi_sdm845-common"
-           remote="github" revision="lineage-22.2" />
+           name="der-exp/android_vendor_xiaomi_sdm845-common_419"
+           remote="github" revision="der-16.2" />
+
+  <!-- С ядром 4.19 hardware/qcom-caf/common выбирает для sdm845 HAL sm8250
+       (QCOM_HARDWARE_VARIANT по TARGET_KERNEL_VERSION), gralloc4 и выравнивание буферов
+       msmnile; sepolicy_vndr legacy-um размечает узлы sysfs ядра 4.19; HAL sm8250 дисплея,
+       медиа и аудио — с поддержкой sdm845. Всё это — форки duckyduckG, у LineageOS этого нет.
+       Удаление — по пути: под именем LineageOS/android_hardware_qcom_* стоят и другие пути. -->
+  <remove-project name="LineageOS/android_hardware_qcom-caf_common" />
+  <project path="hardware/qcom-caf/common" name="der-exp/android_hardware_qcom-caf_common"
+           groups="qcom" remote="github" revision="der-16.2" >
+    <linkfile src="os_pickup_aosp.mk" dest="hardware/qcom/Android.mk" />
+    <linkfile src="os_pickup_sepolicy_vndr.mk" dest="device/qcom/sepolicy_vndr/SEPolicy.mk" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/msm8953/Android.bp" />
+    <linkfile src="os_pickup.bp" dest="hardware/qcom-caf/msm8998/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sdm660/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sdm845/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8150/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8250/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8350/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8450/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8450-6.6/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8550/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8650/Android.bp" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8750/Android.bp" />
+  </project>
+  <remove-project name="LineageOS/android_device_qcom_sepolicy_vndr" path="device/qcom/sepolicy_vndr/legacy-um" />
+  <project path="device/qcom/sepolicy_vndr/legacy-um" name="der-exp/android_device_qcom_sepolicy_vndr"
+           groups="qcom,lahaina" remote="github" revision="der-16.2" />
+  <remove-project name="LineageOS/android_hardware_qcom_audio" path="hardware/qcom-caf/sm8250/audio" />
+  <project path="hardware/qcom-caf/sm8250/audio" name="der-exp/android_hardware_qcom_audio"
+           groups="qcom,kona" remote="github" revision="der-16.2" />
+  <remove-project name="LineageOS/android_hardware_qcom_display" path="hardware/qcom-caf/sm8250/display" />
+  <project path="hardware/qcom-caf/sm8250/display" name="der-exp/android_hardware_qcom_display"
+           groups="qcom" remote="github" revision="der-16.2" />
+  <remove-project name="LineageOS/android_hardware_qcom_media" path="hardware/qcom-caf/sm8250/media" />
+  <project path="hardware/qcom-caf/sm8250/media" name="der-exp/android_hardware_qcom_media"
+           groups="qcom,kona" remote="github" revision="der-16.2" />
 
   <!-- Userspace nftables под bionic: nft в system_ext, libnftnl и libmnl статически. -->
   <project path="external/nftables"
