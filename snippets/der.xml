@@ -69,4 +69,14 @@
   <project path="external/steer"
            name="xyzmean/steer"
            remote="github" revision="android" />
+
+  <!-- ContactsProvider LineageOS закреплён на 59be632 — последнем коммите ДО «Prevent SQL
+       injection in SelectionBuilder» (5e14890, май 2026). Тот патч безопасности зовёт
+       SQLiteTokenizer.OPTION_CHECK_BRACKETS, а константа приходит парной правкой
+       frameworks/base, которой во frameworks/base DerpFest 16.2 ещё нет: с головой ветки
+       lineage-23.2 сборка падает на SelectionBuilder.java. Форк DerpFest этого проекта есть
+       только для ветки 17. Цена: без двух майских исправлений (SelectionBuilder и предел
+       размера Note.NOTE) — снять закрепление, когда DerpFest подтянет правку фреймворка. -->
+  <extend-project name="LineageOS/android_packages_providers_ContactsProvider"
+                  revision="59be632a60c69882bf5f772e31b2a60ca68dc483" />
 </manifest>
