@@ -79,4 +79,14 @@
        размера Note.NOTE) — снять закрепление, когда DerpFest подтянет правку фреймворка. -->
   <extend-project name="LineageOS/android_packages_providers_ContactsProvider"
                   revision="59be632a60c69882bf5f772e31b2a60ca68dc483" />
+
+  <!-- hardware/lineage/compat — форк der-exp с переходником для блоба libwfdservice.so:
+       блобы beryllium из lineage-22.2 зовут трёхаргументный
+       AudioSystem::setDeviceConnectionState, а в Android 16 он четырёхаргументный; bionic
+       разрешает символы при загрузке, и без переходника wfdservice не запускался бы
+       (падал бы по кругу). Остальное — lineage-23.2 без изменений. -->
+  <remove-project name="LineageOS/android_hardware_lineage_compat" />
+  <project path="hardware/lineage/compat"
+           name="der-exp/android_hardware_lineage_compat"
+           remote="github" revision="der-16.2" />
 </manifest>
